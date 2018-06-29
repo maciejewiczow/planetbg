@@ -5,7 +5,7 @@
   "main": "index.html",
   "scripts": {
     "test": "jest",
-    "start": "call \"node_modules/.bin/webpack.cmd\" --config webpack.config.js -w"
+    "start": "start \"webpack\" call \"node_modules/.bin/webpack.cmd\" --config webpack.config.js --mode development -w"
   },
   "repository": {
     "type": "git",
