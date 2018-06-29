@@ -22,6 +22,7 @@ export class Animation {
 
     private mouse = new Vector2();
     private scrolDelta = 0;
+    private scrollTop = 0;
 
     /**
      * Creates an instance of Animation.
@@ -156,15 +157,23 @@ export class Animation {
         this.mouse.y = e.clientY - window.innerHeight / 2;
     }
 
-    handleMouseScroll(e: WheelEvent) {
-         // cross-browser wheel delta
-        e = window.event as WheelEvent || e; // old IE support
-        let delta = Math.max(-1, Math.min(1, (e.wheelDelta || -e.detail)));
+    private ignoreEvents = 0;
 
-        delta *= 0.05;
+    handleMouseScroll(e: UIEvent) {
+        if (this.ignoreEvents < 3) {
+            this.ignoreEvents++;
+            return;
+        }
 
-        this.asteroids.setRotationSpeed(lerp(this.scrolDelta, delta, 0.001));
+        let delta = window.scrollY - this.scrollTop;
+
+        delta *= 0.0001;
+
+        console.log(delta);
+
+        this.asteroids.setAccSpeed(lerp(this.scrolDelta, delta, 0.0005));
         this.scrolDelta = delta;
+        this.scrollTop = window.scrollY;
     }
 
     onResize() {

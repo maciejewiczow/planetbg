@@ -1,11 +1,14 @@
-import { Material, Mesh, IcosahedronGeometry, Math as TMath } from "three";
+import { IcosahedronGeometry, Material, Mesh } from "three";
+import { SimplexNoise } from 'three/examples/js/SimplexNoise';
+
+export const simplex = new SimplexNoise();
 
 export class Planet extends Mesh {
 
     constructor(roughness: number, material: Material) {
         const geometry = new IcosahedronGeometry(150, 3);
 
-        geometry.vertices.forEach(x => x.multiplyScalar(0.95 + TMath.randFloatSpread(roughness)))
+        geometry.vertices.forEach(x => x.multiplyScalar(0.95 + simplex.noise(x.x, x.y)*roughness))
         geometry.computeFlatVertexNormals()
 
         super(geometry, material);

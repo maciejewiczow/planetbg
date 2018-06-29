@@ -8,8 +8,9 @@ interface AsteroidGroupSettings {
 }
 
 export class AsteroidGroup extends Group {
-    private minRotV = 0.002;
+    private minRotV = 0.003;
     private rotV = 0;
+    private acc = 0;
 
     constructor(material: Material, { radius, maxSize, roughness, spread }: AsteroidGroupSettings) {
         super();
@@ -24,11 +25,13 @@ export class AsteroidGroup extends Group {
         }
     }
 
-    setRotationSpeed(v: number) {
-        this.rotV = v;
+    setAccSpeed(a: number) {
+        this.acc = a;
     }
 
     update() {
+        this.rotV += this.acc;
+        this.acc *= 0.9
         this.rotV *= 0.99;
         this.rotation.y += this.minRotV + this.rotV;
     }

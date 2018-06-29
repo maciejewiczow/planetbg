@@ -9,6 +9,5 @@ const app = new Animation(
 app.animate();
 
 document.addEventListener("mousemove", app.handleMouseMove);
-document.addEventListener("mousewheel", app.handleMouseScroll);
-document.addEventListener("DOMMouseScroll", app.handleMouseScroll);
+window.addEventListener("scroll", app.handleMouseScroll)
 window.addEventListener("resize", app.onResize);
