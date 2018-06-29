@@ -2,7 +2,7 @@
   "name": "planetbg",
   "version": "1.0.0",
   "description": "THREE.js planet animated background",
-  "main": "index.html",
+  "main": "dist/index.html",
   "scripts": {
     "test": "jest",
     "start": "start \"webpack\" call \"node_modules/.bin/webpack.cmd\" --config webpack.config.js -w"
