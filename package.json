@@ -25,6 +25,7 @@
   },
   "homepage": "https://github.com/maciejewiczow/planetbg#readme",
   "devDependencies": {
+    "@types/bluebird": "^3.5.21",
     "@types/three": "^0.92.7",
     "ts-loader": "^4.4.1",
     "typescript": "^2.9.2",

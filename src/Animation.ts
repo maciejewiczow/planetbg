@@ -1,7 +1,9 @@
-import { AmbientLight, DirectionalLight, Group, ImageUtils, LinearFilter, MeshLambertMaterial, PerspectiveCamera, Scene, WebGLRenderer, Vector2 } from "three";
+import { AmbientLight, DirectionalLight, Group, LinearFilter, MeshLambertMaterial, PerspectiveCamera, Scene, TextureLoader, Vector2, WebGLRenderer, Texture, Material } from "three";
 import { AsteroidGroup } from "./AsteroidGroup";
 import { Planet } from "./Planet";
 import { Starfield } from "./Starfield";
+// @ts-ignore
+import { Promise, resolve, reject } from "bluebird";
 
 export const lerp = (start: number, end: number, amt: number) => (1 - amt) * start + amt * end;
 
@@ -13,7 +15,7 @@ export class Animation {
     private camera: PerspectiveCamera;
 
     private system: Group;
-    private planet: Planet;
+    private planet?: Planet;
     private asteroids: AsteroidGroup;
 
     private frames = 0;
@@ -41,11 +43,13 @@ export class Animation {
         this.camera = this.getCamera();
         this.setLights();
         this.asteroids = this.getAsteroids();
-        this.planet = this.getPlanet();
-        this.system = this.getSystem();
+        this.getPlanet().then(x => {
+            this.planet = x;
+            this.system = this.getSystem();
 
-        this.scene.add(this.system);
-        this.scene.add(this.getStars());
+            this.scene.add(this.system);
+            this.scene.add(this.getStars());
+        });
 
         if (fpsTarget) {
             this.measureFPS = true;
@@ -83,16 +87,26 @@ export class Animation {
         this.scene.add(light);
     }
 
-    private getPlanet() {
-        const texture = ImageUtils.loadTexture("assets/face.png");
-        texture.minFilter = texture.magFilter = LinearFilter;
-
-        const material = new MeshLambertMaterial({
-            color: 0xffcb4c,
-            map: texture
+   
+    private async getPlanet() {
+        let loader = new TextureLoader();
+        
+        let material = await new Promise<Material>((resolve, reject) => {
+            const handleTexture = (texture: Texture) => {
+                texture.minFilter = texture.magFilter = LinearFilter;
+                resolve(new MeshLambertMaterial({
+                    color: 0xffcb4c,
+                    map: texture
+                }));
+            }
+            loader.load("https://static.tumblr.com/lnwyqnt/OVDpb3ua4/face.png",
+                handleTexture,
+                undefined,
+                () => loader.load("assets/face.png", handleTexture, undefined, () => reject("Error loading from fallback location"))
+            );
         });
 
-        return new Planet(0.035, material);
+        return new Planet(0.03, material);
     }
 
     private getAsteroids() {
@@ -107,7 +121,7 @@ export class Animation {
     private getSystem() {
         const sys = new Group();
         sys.add(this.asteroids);
-        sys.add(this.planet);
+        sys.add(this.planet!);
         sys.rotation.x = 0.2;
         sys.rotation.z = 0.1;
         return sys;
@@ -126,7 +140,7 @@ export class Animation {
         if (this.measureFPS) this.frames++;
         this.renderer.render(this.scene, this.camera);
 
-        this.planet.update();
+        this.planet!.update();
         this.asteroids.update();
 
         const ratio = 0.0002;
@@ -137,16 +151,16 @@ export class Animation {
         x *= ratio;
         y *= ratio;
 
-        const h = Math.PI * 1.5;
-        const w = 1;
-
-        const sigmoid = (x: number) => (1 / (1 + Math.exp(-x / w))) * h - h / 2;
+        const sigmoid = (x: number, w: number, h: number) => (1 / (1 + Math.exp(-x / w))) * h - h / 2;
 
         const lerpFactor = 0.08
+        const sigH = Math.PI * 1.5;
+        const sigW = 1;
 
-        this.camera.position.x = lerp(this.camera.position.x, Animation.CAM_INIT_Z * Math.sin(sigmoid(x)), lerpFactor);
-        this.camera.position.z = lerp(this.camera.position.z, Animation.CAM_INIT_Z * Math.cos(sigmoid(y)), lerpFactor);
-        this.camera.position.y = lerp(this.camera.position.y, Animation.CAM_INIT_Z * Math.sin(sigmoid(-y)), lerpFactor);
+
+        this.camera.position.x = lerp(this.camera.position.x, Animation.CAM_INIT_Z * Math.sin(sigmoid(x, sigW, sigH)), lerpFactor);
+        this.camera.position.z = lerp(this.camera.position.z, Animation.CAM_INIT_Z * Math.cos(sigmoid(y, sigW, sigH)), lerpFactor);
+        this.camera.position.y = lerp(this.camera.position.y, Animation.CAM_INIT_Z * Math.sin(sigmoid(-y, sigW, sigH)), lerpFactor);
         this.camera.lookAt(this.system.position);
 
         requestAnimationFrame(this.animate.bind(this));
@@ -168,8 +182,6 @@ export class Animation {
         let delta = window.scrollY - this.scrollTop;
 
         delta *= 0.0001;
-
-        console.log(delta);
 
         this.asteroids.setAccSpeed(lerp(this.scrolDelta, delta, 0.0005));
         this.scrolDelta = delta;
